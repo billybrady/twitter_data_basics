@@ -77,8 +77,21 @@ with(tweets, points(lng, lat, pch = 20, cex = .75, col = rgb(0, .3, .7, .75)))
 ## 3 - Explore most used words in dataset - construct wordcloud
 
 ``` r
-#tokenize
-tweets_tokens <- tweets %>% unnest_tokens(word, text, token="tweets")
+# remove URLs
+tweets$text <- gsub("https\\S*","", tweets$text)
+
+# remove "@username" tags
+tweets$text <- gsub("@\\w+", "", tweets$text) 
+
+# put data into tidy text format - note we use 'token = 'tweets'' for twitter-specific text preprocessing
+tweets_tokens <- tweets %>% 
+  unnest_tokens(word, text, token = "tweets") %>% 
+  # remove numbers
+  filter(!str_detect(word, "^[0-9]*$")) %>%
+  # remove stop words
+  anti_join(stop_words) %>%
+  # stem the words
+  mutate(word = SnowballC::wordStem(word))
 
 #plot
 wordcloud(tweets_tokens$word, min.freq=200)
